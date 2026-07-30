@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echo Rocket · Welcome Aboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #101A2E;
+    --ink-soft: #1B2A47;
+    --runway: #E9EEF4;
+    --runway-deep: #DCE4EE;
+    --coral: #F2542D;
+    --amber: #FFB238;
+    --teal: #0E7C7B;
+    --text-dark: #16223A;
+    --text-mute: #5A6478;
+    --white: #FFFFFF;
+    --line: rgba(16,26,46,0.14);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Plus Jakarta Sans', sans-serif;
+    background:var(--runway);
+    color:var(--text-dark);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .display{font-family:'Space Grotesk', sans-serif;}
+
+  /* ---------- Flight path progress (signature element) ---------- */
+  .flightbar{
+    position:fixed; top:0; left:0; width:100%; height:34px;
+    background:var(--ink);
+    z-index:100;
+    display:flex; align-items:center;
+    overflow:hidden;
+  }
+  .flightbar-track{
+    position:relative; width:100%; height:2px; margin:0 20px;
+    background-image:repeating-linear-gradient(90deg, rgba(255,255,255,0.28) 0 6px, transparent 6px 14px);
+  }
+  .flightbar-fill{
+    position:absolute; top:0; left:0; height:2px; width:0%;
+    background:linear-gradient(90deg, var(--coral), var(--amber));
+    transition:width .1s linear;
+  }
+  .flightbar-plane{
+    position:absolute; top:50%; left:0%;
+    transform:translate(-50%,-50%);
+    font-size:13px;
+    transition:left .1s linear;
+  }
+
+  /* ---------- Hero / Boarding pass ---------- */
+  .hero{
+    background:radial-gradient(120% 140% at 50% -10%, #24365C 0%, var(--ink) 55%, #0B1322 100%);
+    padding:70px 20px 60px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; right:-60px; top:20px; width:260px; height:260px;
+    background:radial-gradient(circle, rgba(255,178,56,0.20) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; left:-70px; bottom:-40px; width:220px; height:220px;
+    background:radial-gradient(circle, rgba(242,84,45,0.16) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .hero-inner{
+    max-width:560px; margin:0 auto;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center;
+    position:relative; z-index:1;
+  }
+  .eyebrow{
+    color:var(--amber); font-size:12.5px; letter-spacing:0.18em; text-transform:uppercase;
+    font-weight:600; margin-bottom:18px; opacity:0;
+    animation:fadeUp .7s ease forwards .1s;
+  }
+  .hero h1{
+    color:var(--white); font-size:clamp(30px, 8vw, 46px); line-height:1.2;
+    font-weight:700; max-width:520px; margin-bottom:16px;
+    opacity:0; animation:fadeUp .7s ease forwards .25s;
+  }
+  .hero h1 span{ color:var(--coral); }
+  .hero p{
+    color:#B9C4D9; font-size:16px; line-height:1.65; max-width:440px; margin-bottom:36px;
+    opacity:0; animation:fadeUp .7s ease forwards .4s;
+  }
+
+  .ticket{
+    background:var(--white);
+    border-radius:18px;
+    display:flex;
+    width:100%;
+    max-width:560px;
+    text-align:left;
+    box-shadow:0 30px 60px -20px rgba(0,0,0,0.45);
+    opacity:0; animation:fadeUp .7s ease forwards .55s;
+  }
+  .ticket-main{
+    flex:1; padding:26px 24px; position:relative;
+  }
+  .ticket-stub{
+    width:120px; flex-shrink:0; padding:26px 14px;
+    background:var(--ink);
+    border-radius:0 18px 18px 0;
+    display:flex; flex-direction:column; align-items:center; justify-content:space-between;
+    position:relative;
+  }
+  .ticket-divider{
+    position:relative; width:0;
+  }
+  .ticket-divider::before, .ticket-divider::after{
+    content:""; position:absolute; width:20px; height:20px; border-radius:50%;
+    background:var(--runway); left:-10px;
+  }
+  .ticket-divider::before{ top:-26px; }
+  .ticket-divider::after{ bottom:-26px; }
+  .ticket-dash{
+    position:absolute; top:8px; bottom:8px; left:-1px; width:1px;
+    background-image:repeating-linear-gradient(180deg, var(--line) 0 6px, transparent 6px 12px);
+  }
+  .route{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px;
+  }
+  .route-code{ font-size:22px; font-weight:700; letter-spacing:0.02em;}
+  .route-arrow{ color:var(--coral); font-size:18px;}
+  .route-label{ font-size:10.5px; color:var(--text-mute); letter-spacing:0.06em; text-transform:uppercase; margin-top:2px;}
+  .ticket-fields{ display:flex; gap:22px; }
+  .field-label{ font-size:9.5px; color:var(--text-mute); letter-spacing:0.08em; text-transform:uppercase; margin-bottom:5px;}
+  .field-value{ font-size:14px; font-weight:600; }
+  .stub-label{ font-size:9px; color:#8792A8; letter-spacing:0.1em; text-transform:uppercase; text-align:center;}
+  .stub-value{ font-size:13px; color:var(--white); font-weight:600; text-align:center; margin-top:4px;}
+  .stub-qr{
+    width:46px; height:46px; border-radius:6px;
+    background:
+      linear-gradient(90deg, transparent 46%, var(--white) 46% 54%, transparent 54%),
+      linear-gradient(0deg, transparent 46%, var(--white) 46% 54%, transparent 54%);
+    background-color:rgba(255,255,255,0.08);
+  }
+
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(16px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+
+  /* ---------- Section shell ---------- */
+  section{ padding:64px 20px; max-width:640px; margin:0 auto; }
+  .section-tag{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; font-weight:600;
+    color:var(--coral); margin-bottom:14px;
+  }
+  .section-tag::before{
+    content:""; width:16px; height:1px; background:var(--coral);
+  }
+  h2{ font-family:'Space Grotesk', sans-serif; font-size:clamp(22px,5vw,28px); margin-bottom:14px; color:var(--ink);}
+  .lead{ color:var(--text-mute); font-size:15.5px; line-height:1.7; margin-bottom:36px; max-width:520px;}
+  .lead.lead-tight{ margin-bottom:14px; }
+  .breadcrumb-note{
+    display:inline-flex; flex-direction:column; gap:8px;
+    background:var(--white); border:1px solid var(--line); border-radius:12px;
+    padding:12px 16px; margin-bottom:36px; max-width:560px;
+  }
+  .breadcrumb-label{ font-size:12px; font-weight:700; color:var(--coral); }
+  .breadcrumb-path{
+    display:flex; flex-wrap:wrap; align-items:center; gap:4px;
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-mute);
+  }
+  .breadcrumb-path .crumb{
+    background:var(--runway); border-radius:5px; padding:3px 7px; color:var(--text-dark);
+  }
+  .breadcrumb-path .chev{ color:var(--coral); font-weight:700; }
+
+  /* ---------- Gates (equipment) ---------- */
+  .gates{ display:flex; flex-direction:column; gap:18px; }
+  .gate{
+    background:var(--white); border-radius:16px; padding:24px 22px;
+    border:1px solid var(--line);
+    position:relative;
+  }
+  .gate-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; }
+  .gate-id{ font-size:11px; color:var(--text-mute); letter-spacing:0.08em; margin-bottom:4px;}
+  .gate-title{ font-size:18px; font-weight:700; font-family:'Space Grotesk', sans-serif;}
+  .gate-badge{
+    font-size:10.5px; font-weight:600; letter-spacing:0.05em; padding:5px 10px; border-radius:20px;
+    background:rgba(14,124,123,0.12); color:var(--teal); white-space:nowrap;
+  }
+  .checklist{ list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; }
+  .checklist li{
+    display:flex; align-items:center; gap:9px; font-size:14.5px; color:var(--text-dark);
+  }
+  .checkmark{
+    width:18px; height:18px; border-radius:5px; background:var(--teal); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .checkmark::after{
+    content:""; width:8px; height:5px; border-left:2px solid white; border-bottom:2px solid white;
+    transform:rotate(-45deg) translateY(-1px);
+  }
+  .gate-note{
+    margin-top:16px; padding-top:14px; border-top:1px dashed var(--line);
+    font-size:13px; color:var(--text-mute);
+  }
+
+  /* ---------- Baggage note ---------- */
+  .baggage{
+    background:var(--ink); border-radius:16px; padding:26px 24px; color:var(--white);
+    display:flex; gap:16px; align-items:flex-start;
+  }
+  .baggage-icon{
+    width:38px; height:38px; border-radius:10px; background:rgba(255,178,56,0.16);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px;
+  }
+  .baggage h3{ font-family:'Space Grotesk', sans-serif; font-size:15.5px; margin-bottom:6px; }
+  .baggage p{ font-size:14px; color:#B9C4D9; line-height:1.65;}
+
+  /* ---------- Check-in steps ---------- */
+  .steps{ display:flex; flex-direction:column; gap:14px; }
+  .step{
+    background:var(--white); border:1px solid var(--line); border-radius:16px;
+    padding:20px 22px; display:flex; gap:16px;
+  }
+  .step-num{
+    width:30px; height:30px; border-radius:50%; background:var(--ink); color:var(--white);
+    display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif;
+    font-weight:700; font-size:14px; flex-shrink:0;
+  }
+  .step-body{ flex:1; }
+  .step-title{ font-size:15px; font-weight:700; margin-bottom:6px; line-height:1.5;}
+  .step-title .pw{
+    display:inline-block; margin-left:6px; font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    background:rgba(242,84,45,0.1); color:var(--coral); padding:3px 9px; border-radius:6px; font-weight:600;
+    vertical-align:middle;
+  }
+  .step-note{ font-size:13px; color:var(--text-mute); line-height:1.6; }
+  .step-mails{ list-style:none; margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .step-mails li{
+    display:flex; gap:10px; align-items:flex-start; font-size:13.5px; background:var(--runway);
+    border-radius:10px; padding:10px 12px; line-height:1.55;
+  }
+  .step-mails .mail-icon{ font-size:15px; flex-shrink:0; margin-top:1px;}
+  .step-mails b{ color:var(--ink); }
+  .step-mails span.arrow-note{ display:block; color:var(--text-mute); font-size:12.5px; margin-top:2px;}
+
+  /* ---------- Office directory ---------- */
+  .floors{ display:flex; flex-direction:column; gap:14px; margin-bottom:20px; }
+  .floor-card{
+    background:var(--white); border:1px solid var(--line); border-radius:16px; padding:20px 22px;
+  }
+  .floor-head{ display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .floor-badge{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; color:var(--white);
+    background:var(--teal); padding:5px 12px; border-radius:20px;
+  }
+  .floor-divs{ display:flex; flex-direction:column; gap:8px; }
+  .floor-div-item{
+    display:flex; align-items:center; gap:9px; font-size:14px; color:var(--text-dark);
+  }
+  .floor-div-item .dot{ width:7px; height:7px; border-radius:50%; background:var(--coral); flex-shrink:0;}
+  .floor-map{
+    width:100%; border-radius:10px; overflow:hidden; margin-bottom:14px;
+    background:var(--runway); border:1px solid var(--line);
+  }
+  .floor-map svg{ display:block; width:100%; height:auto; }
+  .contact-card{
+    background:var(--ink); border-radius:16px; padding:22px 24px; color:var(--white);
+  }
+  .contact-card h4{ font-family:'Space Grotesk',sans-serif; font-size:13.5px; color:var(--amber); margin-bottom:14px; letter-spacing:0.04em;}
+  .contact-list{ display:flex; flex-direction:column; gap:10px; }
+  .contact-item{ font-size:13.5px; line-height:1.6; color:#D7DFEC; }
+  .contact-item b{ color:var(--white); }
+
+  /* ---------- Setup checklist ---------- */
+  .setup-card{
+    background:var(--white); border-radius:16px; padding:26px 24px; border:1px solid var(--line);
+    display:flex; gap:18px; align-items:center;
+  }
+  .setup-icon{
+    width:52px; height:52px; border-radius:14px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--coral), var(--amber));
+    display:flex; align-items:center; justify-content:center; font-size:22px;
+  }
+  .setup-text h3{ font-size:16.5px; margin-bottom:5px; font-family:'Space Grotesk', sans-serif;}
+  .setup-text p{ font-size:14px; color:var(--text-mute); line-height:1.6;}
+  .setup-text code{
+    background:var(--runway-deep); padding:2px 6px; border-radius:5px; font-size:12.5px;
+  }
+
+  /* ---------- Footer / landing ---------- */
+  footer{
+    background:var(--ink); padding:70px 20px 50px; text-align:center; position:relative; overflow:hidden;
+  }
+  footer::before{
+    content:""; position:absolute; left:50%; top:0; width:1px; height:40px;
+    background-image:repeating-linear-gradient(180deg, rgba(255,255,255,0.3) 0 5px, transparent 5px 10px);
+    transform:translateX(-50%);
+  }
+  .land-badge{
+    display:inline-block; font-size:26px; margin-bottom:18px;
+  }
+  footer h2{ color:var(--white); margin-bottom:12px; }
+  footer p{ color:#8792A8; font-size:14.5px; max-width:380px; margin:0 auto 28px; line-height:1.7;}
+  .footer-code{
+    display:inline-flex; gap:10px; padding:10px 18px; border-radius:30px;
+    border:1px solid rgba(255,255,255,0.16); color:#B9C4D9; font-size:12px; letter-spacing:0.08em;
+  }
+
+  @media (max-width:480px){
+    .ticket{ flex-direction:column; max-width:100%; }
+    .ticket-stub{
+      width:100%; border-radius:0 0 18px 18px; flex-direction:row; padding:16px 24px;
+    }
+    .ticket-dash{ display:none; }
+    .checklist{ grid-template-columns:1fr; }
+    .baggage, .setup-card{ flex-direction:column; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; }
+  }
+
+  :focus-visible{ outline:2px solid var(--coral); outline-offset:3px; }
+</style>
+</head>
+<body>
+
+  <div class="flightbar" aria-hidden="true">
+    <div class="flightbar-track">
+      <div class="flightbar-fill" id="fbFill"></div>
+      <div class="flightbar-plane" id="fbPlane">✈️</div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+   <div class="hero-inner">
+    <p class="eyebrow">Boarding · New Crew Onboarding</p>
+    <h1>Echo Marketing <span>탑승</span>을<br>진심으로 환영합니다.</h1>
+    <p>여러분을 새로운 동료로 맞이하게 되어 정말 기쁩니다.<br>잘 적응하실 수 있도록 저희가 곁에서 함께할게요🚀</p>
+
+    <div class="ticket">
+      <div class="ticket-main">
+        <div class="route">
+          <span class="route-code">YOU</span>
+          <span class="route-arrow">✈</span>
+          <span class="route-code" style="color:var(--coral)">ECHO MARKETING</span>
+        </div>
+        <div class="route-label">Departure → New Beginning</div>
+        <div class="ticket-fields" style="margin-top:18px;">
+          <div>
+            <div class="field-label">Flight</div>
+            <div class="field-value mono">ER-2026</div>
+          </div>
+          <div>
+            <div class="field-label">Seat</div>
+            <div class="field-value mono">NEW CREW</div>
+          </div>
+          <div>
+            <div class="field-label">Status</div>
+            <div class="field-value" style="color:var(--teal)">Confirmed</div>
+          </div>
+        </div>
+      </div>
+      <div class="ticket-divider">
+        <div class="ticket-dash"></div>
+      </div>
+      <div class="ticket-stub">
+        <div>
+          <div class="stub-label">Gate</div>
+          <div class="stub-value">DAY 1</div>
+        </div>
+        <div class="stub-qr" aria-hidden="true"></div>
+        <div>
+          <div class="stub-label">Class</div>
+          <div class="stub-value">CREW</div>
+        </div>
+      </div>
+    </div>
+   </div>
+  </div>
+
+  <!-- EQUIPMENT -->
+  <section id="equipment">
+    <div class="section-tag">Equipment Check</div>
+    <h2>지급받으신 장비 목록을<br>확인해주세요</h2>
+    <p class="lead">근무 환경에 맞춰 아래 두 가지 게이트 중 하나로 장비가 지급됩니다.<br>목록을 확인하시고 빠짐없이 받으셨는지 체크해주세요.</p>
+
+    <div class="gates">
+      <div class="gate">
+        <div class="gate-head">
+          <div>
+            <div class="gate-id mono">GATE A</div>
+            <div class="gate-title">노트북을 지급받으신 경우</div>
+          </div>
+          <span class="gate-badge">LAPTOP</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="checkmark"></span>노트북 가방</li>
+          <li><span class="checkmark"></span>키보드</li>
+          <li><span class="checkmark"></span>충전기</li>
+          <li><span class="checkmark"></span>마우스</li>
+          <li><span class="checkmark"></span>거치대</li>
+          <li><span class="checkmark"></span>랜허브</li>
+        </ul>
+      </div>
+
+      <div class="gate">
+        <div class="gate-head">
+          <div>
+            <div class="gate-id mono">GATE B</div>
+            <div class="gate-title">데스크탑 사용자</div>
+          </div>
+          <span class="gate-badge">DESKTOP</span>
+        </div>
+        <ul class="checklist">
+          <li><span class="checkmark"></span>키보드</li>
+          <li><span class="checkmark"></span>마우스</li>
+        </ul>
+        <div class="gate-note">💻 데스크탑은 자리에 미리 설치되어 있을 예정입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECK-IN PROCESS -->
+  <section style="padding-top:0;">
+    <div class="section-tag">Check-in Process</div>
+    <h2>첫 로그인,<br>이렇게 진행해주세요</h2>
+    <p class="lead">장비 확인이 끝나셨다면, 아래 순서대로 첫 로그인과 계정 설정을 진행해주세요.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">(노트북을 지급받은 경우) 노트북을 재부팅합니다.<span class="pw">PW: No-0000000000</span></div>
+          <div class="step-note">*노트북의 경우 자산번호(No-0000000000)를 참고하여 입력해주세요.<br>*가장 앞자리 숫자가 0으로 시작된다면 0을 제외한 숫자만 입력해주세요.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">윈도우 로그인을 진행합니다.<span class="pw">PW: echo123!</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">바탕화면의 '신규 입사자 로그인 가이드' 워드 파일을 확인합니다.</div>
+          <div class="step-note">*가이드를 따라 Google 계정과 Microsoft 계정에 로그인해주세요.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Chrome을 켜고 Google 계정에 로그인 후, G-mail을 들어갑니다.</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <div class="step-title">그리고 G-mail에서 아래 3가지 메일을 확인해주세요!</div>
+          <ul class="step-mails">
+            <li>
+              <span class="mail-icon">📩</span>
+              <div><b>[서명요청] 'OOO'님이 '신규입사자 입사 서류'에 서명을 요청했습니다.</b>
+                <span class="arrow-note">→ 해당 메일 클릭하시고, 입사 서류에 서명해주세요!</span></div>
+            </li>
+            <li>
+              <span class="mail-icon">📩</span>
+              <div><b>[온보딩] 에코마케팅과 함께하게 된 것을 환영합니다.</b>
+                <span class="arrow-note">→ 해당 메일 클릭하시고, 온보딩 프로세스 링크로 입장해주세요!</span></div>
+            </li>
+            <li>
+              <span class="mail-icon">📩</span>
+              <div><b>[온보딩] '수습 OO' 수습기간 프로세스 안내</b>
+                <span class="arrow-note">→ 앞으로 여러분의 수습기간이 어떻게 진행되는지 자세히 안내드리고 있어요!</span></div>
+            </li>
+          </ul>
+          <div class="step-note" style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);">💡 위 3가지 메일을 못 받으셨다면 Talent Development Div.로 연락 부탁드립니다.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OFFICE DIRECTORY -->
+  <section style="padding-top:0;">
+    <div class="section-tag">Terminal Map</div>
+    <h2>에코마케팅 주요 Division 배치도</h2>
+    <p class="lead lead-tight">자리 찾기가 어려우실 땐 아래 배치와 문의처를 참고해주세요.</p>
+    <div class="breadcrumb-note">
+      <span class="breadcrumb-label">📍 더 자세한 자리 배치도</span>
+      <div class="breadcrumb-path">
+        <span class="crumb">루프[신규 입사자용]</span><span class="chev">›</span><span class="crumb">온보딩 프로세스 안내</span><span class="chev">›</span><span class="crumb">에코 생활 사진</span><span class="chev">›</span><span class="crumb">4. FAQ 매뉴얼</span><span class="chev">›</span><span class="crumb">3-3) 사무실 배치도</span>
+      </div>
+    </div>
+
+    <div class="floors">
+      <div class="floor-card">
+        <div class="floor-head">
+          <span class="floor-badge mono">10F</span>
+        </div>
+        <div class="floor-map">
+          <svg viewBox="0 0 320 190" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="312" height="182" rx="6" fill="#FFFFFF" stroke="#C9D3E0" stroke-width="1.5"/>
+            <!-- top meeting rooms row -->
+            <rect x="16" y="16" width="26" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="46" y="16" width="26" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="76" y="16" width="26" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="106" y="16" width="26" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="136" y="16" width="26" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="252" y="14" width="24" height="22" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="280" y="14" width="24" height="22" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <text x="264" y="28" font-size="6" fill="#5A6478" text-anchor="middle">Focus</text>
+            <text x="292" y="28" font-size="6" fill="#5A6478" text-anchor="middle">Focus</text>
+            <!-- server room -->
+            <rect x="252" y="46" width="52" height="36" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <text x="278" y="67" font-size="7" fill="#5A6478" text-anchor="middle">Server Room</text>
+            <!-- open floor -->
+            <text x="150" y="105" font-size="17" font-weight="700" fill="#16223A" text-anchor="middle">10층</text>
+            <!-- highlight: marketing tech div -->
+            <rect x="232" y="94" width="72" height="30" rx="4" fill="#F2542D" fill-opacity="0.14" stroke="#F2542D" stroke-width="1.5"/>
+            <text x="268" y="107" font-size="8.5" font-weight="700" fill="#F2542D" text-anchor="middle">황수환</text>
+            <text x="268" y="118" font-size="8.5" font-weight="700" fill="#F2542D" text-anchor="middle">김민성</text>
+            <line x1="268" y1="124" x2="268" y2="134" stroke="#F2542D" stroke-width="1.5"/>
+            <text x="268" y="146" font-size="10" font-weight="700" fill="#F2542D" text-anchor="middle">Marketing Tech Div.</text>
+            <!-- bottom row -->
+            <rect x="16" y="150" width="26" height="24" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="46" y="150" width="26" height="24" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="76" y="150" width="26" height="24" fill="#F3F6FA" stroke="#C9D3E0"/>
+          </svg>
+        </div>
+        <div class="floor-divs">
+          <div class="floor-div-item"><span class="dot"></span>Marketing Tech Div.</div>
+        </div>
+      </div>
+      <div class="floor-card">
+        <div class="floor-head">
+          <span class="floor-badge mono">24F</span>
+        </div>
+        <div class="floor-map">
+          <svg viewBox="0 0 340 250" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="332" height="242" rx="6" fill="#FFFFFF" stroke="#C9D3E0" stroke-width="1.5"/>
+            <!-- pillars -->
+            <rect x="16" y="14" width="24" height="20" fill="#E7ECF2" stroke="#C9D3E0"/>
+            <rect x="46" y="14" width="24" height="20" fill="#E7ECF2" stroke="#C9D3E0"/>
+            <rect x="76" y="14" width="24" height="20" fill="#E7ECF2" stroke="#C9D3E0"/>
+            <!-- Tech 연구소 -->
+            <rect x="16" y="44" width="54" height="30" fill="#16223A"/>
+            <text x="43" y="63" font-size="8" fill="#FFFFFF" text-anchor="middle">Tech 연구소</text>
+            <line x1="16" y1="90" x2="70" y2="150" stroke="#C9D3E0" stroke-width="1" stroke-dasharray="4 3"/>
+            <!-- focus rooms -->
+            <rect x="16" y="166" width="32" height="26" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <text x="32" y="182" font-size="6" fill="#5A6478" text-anchor="middle">Focus Room1</text>
+            <rect x="16" y="196" width="32" height="26" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <text x="32" y="212" font-size="6" fill="#5A6478" text-anchor="middle">Focus Room2</text>
+            <!-- generic desks (middle) -->
+            <rect x="110" y="50" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="136" y="50" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="162" y="50" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="110" y="76" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="136" y="76" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <rect x="162" y="76" width="20" height="20" fill="#F3F6FA" stroke="#C9D3E0"/>
+            <!-- highlight: shared seat column (Talent Dev on top label, Business Mgmt via bottom arrow) -->
+            <rect x="256" y="20" width="60" height="140" rx="4" fill="none" stroke="#F2542D" stroke-width="2"/>
+            <rect x="258" y="22" width="27" height="136" fill="#FBE3DC" stroke="#F2542D" stroke-width="1"/>
+            <rect x="287" y="22" width="27" height="136" fill="#FBE3DC" stroke="#F2542D" stroke-width="1"/>
+            <text x="250" y="30" font-size="10" font-weight="700" fill="#F2542D" text-anchor="end">Talent Development Div. ▶</text>
+            <line x1="300" y1="160" x2="300" y2="176" stroke="#F2542D" stroke-width="1.5"/>
+            <polygon points="300,158 296,166 304,166" fill="#F2542D"/>
+            <text x="314" y="188" font-size="9.5" font-weight="700" fill="#F2542D" text-anchor="end">▲ Business Management Div.</text>
+            <!-- corridor -->
+            <rect x="16" y="212" width="308" height="16" fill="#EEF1F6" stroke="#C9D3E0"/>
+            <text x="170" y="224" font-size="7" fill="#5A6478" text-anchor="middle">외부 통로</text>
+            <text x="175" y="160" font-size="17" font-weight="700" fill="#16223A" text-anchor="middle">24층</text>
+          </svg>
+        </div>
+        <div class="floor-divs">
+          <div class="floor-div-item"><span class="dot"></span>Business Management Div.</div>
+          <div class="floor-div-item"><span class="dot"></span>Talent Development Div.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-card">
+      <h4>문의처</h4>
+      <div class="contact-list">
+        <div class="contact-item"><b>Business Management Div.</b> (서예지, 정예빈) : 급여/근태/인사/비품/사원증 관련</div>
+        <div class="contact-item"><b>Talent Development Div.</b> (한지영 리더, 홍채민, 도지현) : 회사 생활/교육/문화 관련</div>
+        <div class="contact-item"><b>Marketing Tech Div.</b> (황수환, 김민성) : 장비 및 IT 전산 관련</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BAGGAGE / CARE -->
+  <section style="padding-top:0;">
+    <div class="baggage">
+      <div class="baggage-icon">🧳</div>
+      <div>
+        <h3>소중한 짐, 소중하게</h3>
+        <p>리스트의 모든 장비들을 깨끗하게 사용해 주세요.<br>추후 자리를 이동하시게 될 경우, 리스트 내 모든 장비들을 직접 챙겨서 함께 이동해 주시면 됩니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section style="padding-top:0;">
+    <div class="section-tag">Pre-Flight Setup</div>
+    <h2>장비 세팅 안내</h2>
+    <div class="setup-card">
+      <div class="setup-icon">🖥️</div>
+      <div class="setup-text">
+        <h3>바탕화면 가이드 파일을 확인해주세요</h3>
+        <p>바탕화면에 위치한 <code>가이드 파일</code>을 참고하여 초기 세팅을 진행해 주세요.<br>막히는 부분이 있으면 언제든 편하게 물어봐 주세요!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER / LANDING -->
+  <footer>
+    <div class="land-badge">🛬</div>
+    <h2>즐거운 첫 비행 되세요</h2>
+    <p>Echo Rocket과 함께하는 여정, 저희 모두가 환영합니다. 궁금한 점은 언제든 편하게 물어봐 주세요.</p>
+    <div class="footer-code mono">WELCOME · TEAM ECHO ROCKET</div>
+  </footer>
+
+<script>
+  const fill = document.getElementById('fbFill');
+  const plane = document.getElementById('fbPlane');
+  function updateProgress(){
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0;
+    fill.style.width = pct + '%';
+    plane.style.left = pct + '%';
+  }
+  window.addEventListener('scroll', updateProgress, {passive:true});
+  window.addEventListener('resize', updateProgress);
+  updateProgress();
+</script>
+
+</body>
+</html>
